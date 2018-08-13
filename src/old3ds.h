@@ -7,6 +7,8 @@ struct old3ds
 {
     u8* boot9; //[0x10000]
     u8* datatcm; //[0x4000]
+    u8* axi_wram; //[0x80000]
+    u8* arm9_wram; //[0x100000]
 
     arm_cpu* cpu9;
 

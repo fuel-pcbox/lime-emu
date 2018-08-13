@@ -1,5 +1,7 @@
 #include "arm.h"
 
+#define printf(...)
+
 void arm_cpu::init()
 {
     for(int i = 0; i < 16; i++)
@@ -824,6 +826,7 @@ void arm_cpu::tick()
         r[14] = r[15] + 8;
         switch(type)
         {
+            case arm_type::arm9: r[15] = 0xffff0010; break; //HACK for 3DS.
             case arm_type::arm11: cp15.control_arm11.high_vectors ? r[15] = 0xffff0010 : r[15] = 0x10; break;
             case arm_type::cortex_a8: cp15.control_cortex_a8.high_vectors ? r[15] = 0xffff0010 : r[15] = 0x10; break;
         }
@@ -926,6 +929,7 @@ void arm_cpu::tick()
         r[14] = r[15] + 4;
         switch(type)
         {
+            case arm_type::arm9: r[15] = 0xffff001c; break; //HACK for 3DS.
             case arm_type::arm11: cp15.control_arm11.high_vectors ? r[15] = 0xffff001c : r[15] = 0x1c; break;
             case arm_type::cortex_a8: cp15.control_cortex_a8.high_vectors ? r[15] = 0xffff001c : r[15] = 0x1c; break;
         }
@@ -1028,6 +1032,7 @@ void arm_cpu::tick()
         r[14] = r[15] + 4;
         switch(type)
         {
+            case arm_type::arm9: r[15] = 0xffff0018; break; //HACK for 3DS.
             case arm_type::arm11: cp15.control_arm11.high_vectors ? r[15] = 0xffff0018 : r[15] = 0x18; break;
             case arm_type::cortex_a8: cp15.control_cortex_a8.high_vectors ? r[15] = 0xffff0018 : r[15] = 0x18; break;
         }
@@ -1131,6 +1136,7 @@ void arm_cpu::tick()
         r[14] = r[15] + 4;
         switch(type)
         {
+            case arm_type::arm9: r[15] = 0xffff0004; break; //HACK for 3DS.
             case arm_type::arm11: cp15.control_arm11.high_vectors ? r[15] = 0xffff0004 : r[15] = 0x04; break;
             case arm_type::cortex_a8: cp15.control_cortex_a8.high_vectors ? r[15] = 0xffff0004 : r[15] = 0x04; break;
         }
