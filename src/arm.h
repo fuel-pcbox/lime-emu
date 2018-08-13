@@ -19,7 +19,6 @@ struct arm_cpu
 {
     u32 r[16];
 
-    bool hle;
     bool do_print;
 
     bool just_branched;

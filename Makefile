@@ -4,7 +4,8 @@ LIBS=
 VPATH=src
 OBJ = arm.o \
 cp15.o \
-main.o
+main.o \
+old3ds.o
 
 all: $(OBJ)
 	$(CXX) $(CFLAGS) $(OBJ) -o lime $(LIBS)

@@ -1,8 +1,4 @@
 #include "arm.h"
-#include "iphone2g.h"
-#include "iphone3gs.h"
-
-#define printf(...)
 
 void arm_cpu::init()
 {
@@ -57,16 +53,6 @@ void arm_cpu::init()
     just_branched = false;
 
     opcode = 0;
-}
-
-void arm_cpu::init_hle(bool print)
-{
-    hle = true;
-    if(!print)
-    {
-        do_print = false;
-        cp15.do_print = false;
-    }
 }
 
 u32 arm_cpu::rw(u32 addr)
@@ -334,7 +320,6 @@ u32 arm_cpu::get_shift_operand(bool s)
             return operand;
         }
         case 7:
-        {
             //RORReg
             int rs = (shift_operand >> 8) & 0xf;
             r[rm] += 4;
@@ -351,7 +336,6 @@ u32 arm_cpu::get_shift_operand(bool s)
                 if(s) cpsr.carry = (r[rm] & (1 << (32 - (r[rs] & 0xff)))) ? 1 : 0;
             }
             return operand;
-        }
         }
     }
     return 0; //Shuts up GCC.
@@ -628,7 +612,7 @@ enum class arm_cond : u8
 void arm_cpu::tick()
 {
     //TODO
-    //makes logs shorter when doing hle
+
     u32 true_r15 = 0;
     if(!cpsr.thumb)
     {
@@ -639,23 +623,6 @@ void arm_cpu::tick()
     {
         true_r15 = r[15] - 2;
         if(just_branched) true_r15 -= 2;
-    }
-    if(hle && ((true_r15 == 0x18012f5e) || (true_r15 == 0x00012f5e)))
-    {
-        iphone2g* dev2g = nullptr;
-        iphone3gs* dev3gs = nullptr;
-        if(type == arm_type::arm11)
-        {
-            dev2g = (iphone2g*)device;
-        }
-        else if(type == arm_type::cortex_a8)
-        {
-            dev3gs = (iphone3gs*)device;
-        }
-        do_print = true;
-        cp15.do_print = true;
-        if(type == arm_type::arm11) dev2g->do_print = true;
-        else if(type == arm_type::cortex_a8) dev3gs->do_print = true;
     }
 
     if(reset)
@@ -747,6 +714,7 @@ void arm_cpu::tick()
         }
         switch(type)
         {
+            case arm_type::arm9: r[15] = 0xffff0000; break; //HACK for 3DS.
             case arm_type::arm11: cp15.control_arm11.high_vectors ? r[15] = 0xffff0000 : r[15] = 0x00; break;
             case arm_type::cortex_a8: cp15.control_cortex_a8.high_vectors ? r[15] = 0xffff0000 : r[15] = 0x00; break;
         }
@@ -1193,13 +1161,13 @@ void arm_cpu::tick()
         next_opcode = rw(r[15]);
         r[15] += 4;
         just_branched = false;
-#undef printf
+
         printf("Opcode:%08x\nPC:%08x\n", opcode, true_r15);
         for(int i = 0; i < 15; i++)
         {
             printf("R%d:%08x\n", i, r[i]);
         }
-#define printf(...)
+
         bool condition = false;
         switch(opcode >> 28)
         {
@@ -3411,13 +3379,12 @@ void arm_cpu::tick()
             }
             else printf("Opcode:%04x\nPC:%08x\nLR:%08x\nSP:%08x\nR0:%08x\nR1:%08x\nR2:%08x\nR3:%08x\nR4:%08x\nR6:%08x\nR12:%08x\nCPSR:%08x\n", opcode, true_r15, r[14], r[13], r[0], r[1], r[2], r[3], r[4], r[6], r[12], cpsr.whole);
         }
-#undef printf
         else printf("Opcode:%04x\nPC:%08x\n", opcode, true_r15);
         for(int i = 0; i < 15; i++)
         {
             printf("R%d:%08x\n", i, r[i]);
         }
-#define printf(...)
+
         switch((opcode >> 13) & 7)
         {
         case 0:

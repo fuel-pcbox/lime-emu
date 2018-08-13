@@ -1,126 +1,50 @@
 #include "common.h"
 #include "arm.h"
+#include "old3ds.h"
 
 int main(int ac, char** av)
 {
-    if(ac < 6)
+    if(ac < 2)
     {
-        printf("usage: %s [device] [emulation_mode] <path_to_bootrom> <path_to_nor> <path_to_iboot>\n", av[0]);
-        printf("device can be \"iphone2g\". No other devices are supported at this time.\n");
-        printf("emulation_mode can be \"full_lle\", \"load_iboot\", or \"load_kernel\".\n");
+        printf("usage: %s <path_to_arm9_bootrom>\n", av[0]);
         return 1;
     }
 
-    std::string device = av[1];
-    std::string emu_mode_str = av[2];
-    device_type dev_type;
-    emu_mode_t emu_mode = emu_mode_t::full_lle;
+    old3ds dev;
+    arm_cpu cpu9;
+
+    cpu9.type = arm_type::arm9;
+
+    cpu9.init();
+
+    dev.cpu9 = &cpu9;
+
+    dev.init();
+
+    cpu9.device = &dev;
+
+    cpu9.rw_real = old3ds_cpu9_rw;
+    cpu9.ww_real = old3ds_cpu9_ww;
     
-    if(device == "iphone2g")
+    FILE* fp = fopen(av[1],"rb");
+    if(!fp)
     {
-        dev_type = device_type::iphone2g;
+        printf("unable to open %s, are you sure it exists?\n", av[2]);
+        return 5;
     }
-    else return 2;
-
-    if(emu_mode_str == "full_lle")
+    if(fread(dev.boot9, 1, 0x10000, fp) != 0x10000)
     {
-        emu_mode = emu_mode_t::full_lle;
-    }
-    else if(emu_mode_str == "load_iboot")
-    {
-        emu_mode = emu_mode_t::load_iboot;
-    }
-    else if(emu_mode_str == "load_kernel")
-    {
-        emu_mode = emu_mode_t::load_kernel;
-        printf("The Load Kernel option isn't implemented right now. ABORT!\n");
-        return 3;
-    }
-    else return 4;
-
-    if(dev_type == device_type::iphone2g)
-    {
-        iphone2g* dev = (iphone2g*)malloc(sizeof(iphone2g));
-        arm_cpu cpu;
-
-        cpu.type = arm_type::arm11;
-
-        cpu.init();
-
-        dev->cpu = &cpu;
-
-        dev->init();
-
-        cpu.device = dev;
-    
-        cpu.rw_real = iphone2g_rw;
-        cpu.ww_real = iphone2g_ww;
-
-        FILE* fp = fopen(av[3],"rb");
-        if(!fp)
-        {
-            printf("unable to open %s, are you sure it exists?\n", av[2]);
-            return 5;
-        }
-        if(fread(dev->bootrom, 1, 0x10000, fp) != 0x10000)
-        {
-            fclose(fp);
-            return 6;
-        }
         fclose(fp);
-
-        fp = fopen(av[4],"rb");
-        if(!fp)
-        {
-            printf("unable to open %s, are you sure it exists?\n", av[3]);
-            return 5;
-        }
-        if(fread(dev->nor, 1, 0x100000, fp) != 0x100000)
-        {
-            fclose(fp);
-            return 6;
-        }
-        fclose(fp);
-
-        if(emu_mode == emu_mode_t::load_iboot)
-        {
-            fp = fopen(av[5],"rb");
-            if(!fp)
-            {
-                printf("unable to open %s, are you sure it exists?\n", av[3]);
-                return 5;
-            }
-            fseek(fp, 0, SEEK_END);
-            s64 filesize = ftell(fp);
-            fseek(fp, 0, SEEK_SET);
-            if(filesize == -1)
-            {
-                fclose(fp);
-                return 7;
-            }
-            if(fread(dev->iboot, 1, filesize, fp) != filesize)
-            {
-                fclose(fp);
-                return 6;
-            }
-            fclose(fp);
-
-            dev->init_hle();
-        }
-        else
-        {
-            memcpy(dev->lowram, dev->bootrom, 0x10000);
-        }
-
-        for(int i = 0; i < 300000; i++)
-        {
-            cpu.run(1);
-            dev->tick();
-        }
-
-        dev->exit();
-        free(dev);
+        return 6;
     }
+    fclose(fp);
+
+    for(int i = 0; i < 10000; i++)
+    {
+        cpu9.run(1);
+    }
+
+    dev.exit();
 
     return 0;
 }
